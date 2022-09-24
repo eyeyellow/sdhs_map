@@ -3,23 +3,6 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-#main-container {
-  display: flex;
-  flex-direction: row;
-}
-
-#map-container {
-  flex: 1;
-}
-
 #map {
   height: 100vh;
-}
-
-#sidebar {
-  width: 400px;
-}
-
-#sidebar h1 {
-  text-align: center;
 }
