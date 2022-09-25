@@ -6,3 +6,11 @@ body {
 #map {
   height: 100vh;
 }
+
+.popup-info .rep-image {
+  height: 200px;
+}
+
+.popup-info .description {
+  padding-bottom: 15px;
+}

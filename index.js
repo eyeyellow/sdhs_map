@@ -2,7 +2,7 @@
 
 // Class for holding the data
 class Location {
-  constructor({ name, folder_id, coordinates }) {
+  constructor({ folder_id, coordinates }) {
     this.folderId = folder_id;
     this.latLng = coordinates;
     this.marker = this.createMarker();
@@ -11,7 +11,7 @@ class Location {
   createMarker() {
     return L.marker(this.latLng)
       // TODO - try to get the loading as a spinner
-      .bindPopup(L.popup({ folderId: this.folderId, content: 'Loading...' }));
+      .bindPopup(L.popup({ folderId: this.folderId, maxWidth: 200, content: 'Loading...' }));
   }
 }
 
@@ -64,6 +64,10 @@ map.on('popupopen', async (event) => {
   const popup = event.popup;
   // console.log(popup.options.folderId);
   const folderInfo = await getFolderInfo(popup.options.folderId);
+  if (folderInfo.euid_representative) {
+    const repFolderEntry = await getEntry(folderInfo.euid_representative);
+    folderInfo.rep_entry = repFolderEntry;
+  }
   popup.setContent(getPopupInfo(folderInfo));
 });
 
@@ -71,20 +75,42 @@ map.on('popupopen', async (event) => {
 const getPopupInfo = function(folderInfo) {
   let popupInfo = `<h3>${folderInfo.name}</h3>`;
   if (folderInfo.description) {
-    popupInfo = popupInfo + `<div>${folderInfo.description}</div>`;
+    // clean up line breaks
+    const description = folderInfo.description.replace(/(?:\r\n|\r|\n)/g, '<br>');
+    popupInfo = popupInfo + `<div class="description">${description}</div>`;
   }
-  return popupInfo;
+  if (folderInfo.rep_entry) {
+    const [ media ] = folderInfo.rep_entry.media;
+    popupInfo = popupInfo + `<img class="rep-image" src="${media.derivatives.public_thumbnail.path}"></img>`;
+  }
+  popupInfo = popupInfo + `<a href="${folderLink(folderInfo.id)}">See More</a>`;
+  return `<div class="popup-info">${popupInfo}</div>`;
 }
 
 // CatalogIt API stuff
 const SDHS_ACCOUNT_ID = 4124;
 
+const folderLink = function(folderId) {
+  return `https://hub.catalogit.app/${SDHS_ACCOUNT_ID}/folder/${folderId}`;
+}
+
 const folderRoute = function(folderId) {
   return `https://api.catalogit.app/api/public/accounts/${SDHS_ACCOUNT_ID}/folders/${folderId}`;
 }
 
+const entryRoute = function(entryId) {
+  return `https://api.catalogit.app/api/public/entries/${entryId}`;
+}
+
 const getFolderInfo = async function(folderId) {
   const response = await fetch(folderRoute(folderId));
+  if (response.ok) {
+    return response.json();
+  }
+}
+
+const getEntry = async function(repId) {
+  const response = await fetch(entryRoute(repId));
   if (response.ok) {
     return response.json();
   }
